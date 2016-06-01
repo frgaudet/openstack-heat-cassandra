@@ -31,10 +31,10 @@ Default node count is 3 (+ 1 seeder).
 
 # Parameters
 
-You can change the default parameters to suit your own environment : 
+You can change the default parameters to suit your own environment. For example, create a 5 nodes cluster, with a m1.xlarge flavor :
 
 ```
 heat stack-create -f cassandra.yaml \
 	-e lib/env.yaml \
-	-P "count=5;key_name=fgaudet-key;image_id=ca70466d-5043-4cb6-a779-8a2b1cf303a4;net_id=dev-net;name=fgaudet_cassandra" Cassandra-stack
+	-P "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=ca70466d-5043-4cb6-a779-8a2b1cf303a4;net_id=dev-net;name=fgaudet_cassandra" Cassandra-stack
 ```
