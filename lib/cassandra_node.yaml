@@ -8,13 +8,8 @@ parameters:
     description: Name of key-pair to be used for the default user
   flavor:
     type: string
-    constraints:
-    - allowed_values:
-      - m1.large
-      - m1.xlarge
-      - m1.xxlarge
-      description: |
-        Choose an instance flavor
+    description: |
+      Choose an instance flavor
   image_id:
     type: string
     label: Server image
