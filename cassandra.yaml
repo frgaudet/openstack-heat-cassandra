@@ -22,7 +22,7 @@ parameters:
         Choose an instance flavor
   image_id:
     type: string
-    label: Server image (Ubuntu Server family)
+    label: Server image
   net_id:
     type: string
     label: Network ID
