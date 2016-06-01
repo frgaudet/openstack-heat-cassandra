@@ -1,0 +1,196 @@
+heat_template_version: 2014-10-16
+
+description: Deploy a Cassandra Node instance
+
+parameters:
+  key_name:
+    type: string
+    description: Name of key-pair to be used for the default user
+  flavor:
+    type: string
+    constraints:
+    - allowed_values:
+      - m1.large
+      - m1.xlarge
+      - m1.xxlarge
+      description: |
+        Choose an instance flavor
+  image_id:
+    type: string
+    label: Server image
+  net_id:
+    type: string
+    label: Network ID
+    description: ID of the network to use
+  name:
+    type: string
+    description: Name of each Cassandra machine booted
+  public_key:
+    type: string
+    description: Name of plublic key to be used for the local Cassandra user
+
+resources:
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: { get_resource: wait_handle }
+      count: 1
+      timeout: 300
+ 
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
+
+  cassandra_node:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: key_name }
+      image: { get_param: image_id }
+      networks:
+        - port: { get_resource: cassandra_port }
+      flavor: { get_param: flavor }
+      name: { get_param: name }
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          params:
+            __public_key__: { get_param: public_key  }
+            wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
+          template: |
+            #!/bin/bash
+            export CASSANDRA_VERSION=3.0.6
+            export JAVA_VERSION=1.8.0_91
+
+            # Manually install Java 8 (only Java 7 available in repo)
+            cd /tmp
+            wget https://api.isima.fr:8080/v1/AUTH_bd20d02f33a848ca88b7f13b83968fcb/public/jdk-8u91-linux-x64.tar.gz
+            tar -zxf jdk-8u91-linux-x64.tar.gz
+            mkdir /usr/local/java
+            mv jdk$JAVA_VERSION/ /usr/local/java
+
+            # Export Java environment variables
+            cat >> /etc/profile << EOF
+            export JAVA_VERSION=$JAVA_VERSION
+            JAVA_HOME=/usr/local/java/jdk\$JAVA_VERSION
+            PATH=\$PATH:\$JAVA_HOME/bin
+            JDK_HOME=/usr/local/java/jdk\$JAVA_VERSION
+            PATH=\$PATH:\$JDK_HOME/bin
+            export JAVA_HOME
+            export JDK_HOME
+            export PATH
+            EOF
+
+            update-alternatives --install "/usr/bin/java" "java" "/usr/local/java/jdk$JAVA_VERSION/bin/java" 1
+            update-alternatives --install "/usr/bin/javac" "javac" "/usr/local/java/jdk$JAVA_VERSION/bin/javac" 1
+            update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/local/java/jdk$JAVA_VERSION/bin/javaws" 1
+            update-alternatives --set java /usr/local/java/jdk$JAVA_VERSION/bin/java
+            update-alternatives --set javac /usr/local/java/jdk$JAVA_VERSION/bin/javac
+            update-alternatives --set javaws /usr/local/java/jdk$JAVA_VERSION/bin/javaws
+
+            # Create local cassandra user
+            useradd -m cassandra
+            mkdir -p /home/cassandra/.ssh
+            echo "__public_key__" > /home/cassandra/.ssh/authorized_keys
+
+            # Install Cassandra
+            cd /opt
+            wget http://mirror.cc.columbia.edu/pub/software/apache/cassandra/$CASSANDRA_VERSION/apache-cassandra-$CASSANDRA_VERSION-bin.tar.gz
+            tar -xf apache-cassandra-$CASSANDRA_VERSION-bin.tar.gz
+            ln -s apache-cassandra-$CASSANDRA_VERSION cassandra
+            mkdir /etc/default/cassandra
+            
+            # Create Cassandra systemd service
+            cat > /lib/systemd/system/cassandra.service << EOF
+            [Unit]
+            Description=Cassandra DB 
+            After=network.target auditd.service
+
+            [Service]
+            EnvironmentFile=-/etc/default/cassandra
+            ExecStart=/opt/cassandra/bin/cassandra&
+            ExecReload=/bin/kill -HUP $MAINPID
+            KillMode=process
+            Restart=on-failure
+
+            [Install]
+            WantedBy=multi-user.target
+            Alias=cassandra.service
+            EOF
+
+            cat > /etc/init/cassandra.conf << EOF
+            # cassandra - DB server
+            #
+
+            description "Cassandra server"
+
+            start on runlevel [2345]
+            stop on runlevel [!2345]
+
+            respawn
+            respawn limit 10 5
+            umask 022
+
+            env SSH_SIGSTOP=1
+            expect stop
+
+            console none
+
+            pre-start script
+                test -x /opt/cassandra/bin/cassandra || { stop; exit 0; }
+
+                mkdir -p -m0755 /var/run/cassandra
+            end script
+
+            exec /opt/cassandra/bin/cassandra
+            EOF
+
+            # Enable either systemd or Upstart service
+            systemctl enable cassandra.service 2>/dev/null || ln -s /lib/init/upstart-job /etc/init.d/cassandra
+
+            # Save cassandra configuration file
+            cp /opt/cassandra/conf/cassandra.yaml /opt/cassandra/conf/casssandra_base.yaml
+
+            # Fix perms
+            chown -R cassandra. /home/cassandra/.ssh
+            chown -R cassandra. /home/cassandra
+            chown -R cassandra. /opt/apache-cassandra-$CASSANDRA_VERSION
+
+            # Export Cassandra environment variables
+            cat >> /home/cassandra/.profile << EOF
+            export CASSANDRA_HOME=/opt/cassandra
+            export PATH=\$PATH:\$CASSANDRA_HOME/bin
+            EOF
+            cat > /etc/sudoers.d/cassandra << EOF
+            cassandra ALL=(ALL) NOPASSWD: /usr/sbin/service cassandra restart
+            EOF
+            chmod 440 /etc/sudoers.d/cassandra
+
+            # Notify Heat we're done
+            wc_notify --data-binary '{"status": "SUCCESS"}'
+
+  cassandra_security_group:
+        type: OS::Neutron::SecurityGroup
+        properties:
+          name: cassandra_security_group
+          rules:
+            - protocol: icmp
+            - protocol: tcp
+              port_range_min: 22
+              port_range_max: 22
+            - protocol: tcp
+              port_range_min: 7000
+              port_range_max: 7000
+
+  cassandra_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: net_id }
+      security_groups:
+        - { get_resource: cassandra_security_group }
+
+outputs:
+  name:
+    description: Name of this Cassandra instance.
+    value: { get_attr: [cassandra_node, name] }
+  ip:
+    description: The IP address of this Cassandra instance.
+    value: { get_attr: [cassandra_node, first_address] }
