@@ -3,22 +3,22 @@
 This heat template allows you to easily deploy a Cassandra cluster on OpenStack.
 
 # Quick start
-1. Clone this repository :
+1) Clone this repository :
 
 `git clone https://github.com/frgaudet/openstack-heat-cassandra.git`
 
-2. Source your OpenStack environment file :
+2) Source your OpenStack environment file :
 
 `source openrc.sh`
 
-3. Prepare your parameters :
+3) Prepare your parameters :
 
 	* key_name: Name of key-pair to be used
 	* image_id: Server image
 	* net_id: Private network id
 	* name: Prefix for all your instances's name
 
-4. Launch a Cluster :
+4) Launch a Cluster :
 
 ```
 cd openstack-heat-cassandra
