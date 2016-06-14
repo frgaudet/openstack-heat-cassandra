@@ -24,7 +24,7 @@ This heat template allows you to easily deploy a Cassandra cluster on OpenStack.
 cd openstack-heat-cassandra
 heat stack-create -f cassandra.yaml \
 	-e lib/env.yaml \
-	-P "key_name=fgaudet-key;image_id=ca70466d-5043-4cb6-a779-8a2b1cf303a4;net_id=dev-net;name=fgaudet_cassandra" Cassandra-stack
+	-P "key_name=fgaudet-key;image_id=1b115984-32b9-4485-a664-26229db439fa;net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
 ```
 
 Default node count is 3 (+ 1 seeder).
@@ -36,5 +36,33 @@ You can change the default parameters to suit your own environment. For example,
 ```
 heat stack-create -f cassandra.yaml \
 	-e lib/env.yaml \
-	-P "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=ca70466d-5043-4cb6-a779-8a2b1cf303a4;net_id=dev-net;name=fgaudet_cassandra" Cassandra-stack
+	-P "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=1b115984-32b9-4485-a664-26229db439fa;net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
+```
+
+# Check it !
+
+Connect to your seeder, using the floating IP which has been automatically set up.
+
+`ssh <username>@IP`
+
+Then login with the cassandra user (via root):
+
+```
+ubuntu@fgaudet-cassandra:~$ sudo su -
+root@fgaudet-cassandra:~# su - cassandra
+```
+
+and check your cluster :
+
+```
+cassandra@fgaudet-cassandra:~$ nodetool status
+Datacenter: datacenter1
+=======================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address    Load       Tokens       Owns (effective)  Host ID                               Rack
+UN  10.0.0.73  83.19 KB   256          49.3%             eb05607c-ee98-4173-9cfc-51735c72b692  rack1
+UN  10.0.0.74  106.9 KB   256          49.0%             d8c96c25-abfb-4f29-aee4-874f54ce0247  rack1
+UN  10.0.0.75  15.42 KB   256          50.9%             e68a3426-fc01-4e08-b304-ea8ebc91526d  rack1
+UN  10.0.0.76  107.37 KB  256          50.7%             cc043259-c900-42ea-961f-ab5119670cfa  rack1
 ```

@@ -65,7 +65,9 @@ resources:
             export CASSANDRA_VERSION=3.0.6
             export JAVA_VERSION=1.8.0_91
 
-            # Manually install Java 8 (only Java 7 available in repo)
+            yum -y install python || apt-get -y install python-minimal
+
+            # Manually install Java 8
             cd /tmp
             wget https://api.isima.fr:8080/v1/AUTH_bd20d02f33a848ca88b7f13b83968fcb/public/jdk-8u91-linux-x64.tar.gz
             tar -zxf jdk-8u91-linux-x64.tar.gz
@@ -130,7 +132,8 @@ resources:
 
             [Service]
             EnvironmentFile=-/etc/default/cassandra
-            ExecStart=/opt/cassandra/bin/cassandra&
+            User=cassandra
+            ExecStart=/opt/cassandra/bin/cassandra
             ExecReload=/bin/kill -HUP $MAINPID
             KillMode=process
             Restart=on-failure
@@ -178,7 +181,12 @@ resources:
             IFS=',' read -r -a server_list <<< "$list"
 
             cp /opt/cassandra/conf/cassandra.yaml /opt/cassandra/conf/cassandra_base.yaml
-            my_ip=$(ip a | grep eth0 -A1 | grep inet | awk '{print $2}' | cut -d "/" -f 1)
+
+            # Select default network device 
+            dev=$(/sbin/ip route | awk '/default/ { print $5 }')
+
+            # Find out associated IP
+            my_ip=$(ip a | grep ${dev} -A1 | grep inet | awk '{print $2}' | cut -d "/" -f 1)
             
             # seeder settings
             sed -i -e "s/listen_address.*/listen_address: ${my_ip}/" \
@@ -187,18 +195,36 @@ resources:
                    -e "s/cluster_name.*/cluster_name: 'MyFirstCluster'/" \
                    -e "s/rpc_address:.*/rpc_address: ${my_ip}/" /opt/cassandra/conf/cassandra.yaml
 
+            # Add Seeder IP in hosts file
+            cat >> /etc/hosts << EOF
+            ${my_ip} $(hostname)
+            EOF
+            
+            # Add nodes IP in hosts file
+            for item in "${server_list[@]}"
+            do
+            ip=$(echo ${item} | cut -d "@" -f 1)
+            hostname=$(echo ${item} | cut -d "@" -f 2)
+            cat >> /etc/hosts << EOF
+            ${ip} ${hostname}
+            EOF
+            done
+
             service cassandra restart
             sleep 5
 
             # node settings
-            for ip in "${server_list[@]}"
+            for item in "${server_list[@]}"
             do
+                ip=$(echo ${item} | cut -d "@" -f 1)
                 # Create node's configuration file
                 cp /opt/cassandra/conf/cassandra.yaml /opt/cassandra/conf/cassandra_${ip}.yaml
                 sed -i  -e "s/listen_address.*/listen_address: ${ip}/" \
                         -e "s/rpc_address:.*/rpc_address: ${ip}/" /opt/cassandra/conf/cassandra_${ip}.yaml
                 sudo -H -u cassandra scp /opt/cassandra/conf/cassandra_${ip}.yaml ${ip}:/opt/cassandra/conf/cassandra.yaml
                 sudo -H -u cassandra ssh ${ip} sudo service cassandra restart
+                sudo -H -u cassandra scp /etc/hosts ${ip}:/tmp/hosts
+                sudo -H -u cassandra ssh ${ip} sudo mv /tmp/hosts /etc/hosts
                 sleep 60
             done
 

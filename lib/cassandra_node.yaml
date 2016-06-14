@@ -55,7 +55,7 @@ resources:
             export CASSANDRA_VERSION=3.0.6
             export JAVA_VERSION=1.8.0_91
 
-            # Manually install Java 8 (only Java 7 available in repo)
+            # Manually install Java 8
             cd /tmp
             wget https://api.isima.fr:8080/v1/AUTH_bd20d02f33a848ca88b7f13b83968fcb/public/jdk-8u91-linux-x64.tar.gz
             tar -zxf jdk-8u91-linux-x64.tar.gz
@@ -101,7 +101,8 @@ resources:
 
             [Service]
             EnvironmentFile=-/etc/default/cassandra
-            ExecStart=/opt/cassandra/bin/cassandra&
+            ExecStart=/opt/cassandra/bin/cassandra
+            User=cassandra
             ExecReload=/bin/kill -HUP $MAINPID
             KillMode=process
             Restart=on-failure
@@ -155,7 +156,7 @@ resources:
             export PATH=\$PATH:\$CASSANDRA_HOME/bin
             EOF
             cat > /etc/sudoers.d/cassandra << EOF
-            cassandra ALL=(ALL) NOPASSWD: /usr/sbin/service cassandra restart
+            cassandra ALL=(ALL) NOPASSWD: /usr/sbin/service cassandra restart,/bin/mv /tmp/hosts /etc/hosts
             EOF
             chmod 440 /etc/sudoers.d/cassandra
 
@@ -183,9 +184,6 @@ resources:
         - { get_resource: cassandra_security_group }
 
 outputs:
-  name:
-    description: Name of this Cassandra instance.
-    value: { get_attr: [cassandra_node, name] }
-  ip:
+  node_param:
     description: The IP address of this Cassandra instance.
-    value: { get_attr: [cassandra_node, first_address] }
+    value: { list_join: ['@', [ get_attr: [cassandra_node, first_address], get_attr: [cassandra_node, name] ] ]  }
