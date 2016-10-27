@@ -53,12 +53,12 @@ resources:
           template: |
             #!/bin/bash
             export CASSANDRA_VERSION=3.0.6
-            export JAVA_VERSION=1.8.0_91
+            export JAVA_VERSION=1.8.0_101
 
             # Manually install Java 8
             cd /tmp
-            wget https://api.isima.fr:8080/v1/AUTH_bd20d02f33a848ca88b7f13b83968fcb/public/jdk-8u91-linux-x64.tar.gz
-            tar -zxf jdk-8u91-linux-x64.tar.gz
+            wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u101-b13/jdk-8u101-linux-x64.tar.gz"
+            tar -zxf jdk-8u101-linux-x64.tar.gz
             mkdir /usr/local/java
             mv jdk$JAVA_VERSION/ /usr/local/java
 
