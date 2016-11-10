@@ -36,7 +36,7 @@ You can change the default parameters to suit your own environment. For example,
 ```
 heat stack-create -f cassandra.yaml \
 	-e lib/env.yaml \
-	-P "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=1b115984-32b9-4485-a664-26229db439fa;net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
+	-P "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=3170a757-0c5b-48a8-899c-1c5a1a264907;net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
 ```
 
 # Check it !
