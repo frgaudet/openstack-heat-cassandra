@@ -241,5 +241,5 @@ outputs:
     description: Name of this Cassandra instance.
     value: { get_attr: [cassandra_seeder, name] }
   ip:
-    description: The IP address of this Cassandra instance.
-    value: { get_attr: [cassandra_seeder, first_address] }
+    description: The floating IP address of this Cassandra instance.
+    value: { get_attr: [floating_ip, floating_ip_address] }

@@ -39,9 +39,35 @@ heat stack-create -f cassandra.yaml \
 	-P "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=3170a757-0c5b-48a8-899c-1c5a1a264907;net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
 ```
 
+Note the stack id :
+```
++--------------------------------------+------------------+--------------------+---------------------+--------------+
+| id                                   | stack_name       | stack_status       | creation_time       | updated_time |
++--------------------------------------+------------------+--------------------+---------------------+--------------+
+| b7a7092c-876c-4c19-a8d3-47cb857a0ca6 | Cassandra-stack  | CREATE_IN_PROGRESS | 2016-08-31T09:28:39 | None         |
++--------------------------------------+------------------+--------------------+---------------------+--------------+
+```
+
+# Check the master
+
+Get your cluster's public IP address using the stack id (see above):
+
+`heat output-show b7a7092c-876c-4c19-a8d3-47cb857a0ca6 public_ip`
+
+This command should return you something like this, with of course a real IP :
+```
++--------------+--------------------------------------------+
+| Property     | Value                                      |
++--------------+--------------------------------------------+
+| description  | The public IP address of this mpi cluster. |
+| output_key   | public_ip                                  |
+| output_value | "XXX.XXX.XXX.XXX"                          |
++--------------+--------------------------------------------+
+```
+
 # Check it !
 
-Connect to your seeder, using the floating IP which has been automatically set up.
+Connect to your seeder, using this IP you've just find out :
 
 `ssh <username>@IP`
 
