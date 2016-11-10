@@ -52,34 +52,10 @@ resources:
             wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
           template: |
             #!/bin/bash
-            export CASSANDRA_VERSION=3.0.6
-            export JAVA_VERSION=1.8.0_101
+            export CASSANDRA_VERSION=3.0.9
 
-            # Manually install Java 8
-            cd /tmp
-            wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u101-b13/jdk-8u101-linux-x64.tar.gz"
-            tar -zxf jdk-8u101-linux-x64.tar.gz
-            mkdir /usr/local/java
-            mv jdk$JAVA_VERSION/ /usr/local/java
-
-            # Export Java environment variables
-            cat >> /etc/profile << EOF
-            export JAVA_VERSION=$JAVA_VERSION
-            JAVA_HOME=/usr/local/java/jdk\$JAVA_VERSION
-            PATH=\$PATH:\$JAVA_HOME/bin
-            JDK_HOME=/usr/local/java/jdk\$JAVA_VERSION
-            PATH=\$PATH:\$JDK_HOME/bin
-            export JAVA_HOME
-            export JDK_HOME
-            export PATH
-            EOF
-
-            update-alternatives --install "/usr/bin/java" "java" "/usr/local/java/jdk$JAVA_VERSION/bin/java" 1
-            update-alternatives --install "/usr/bin/javac" "javac" "/usr/local/java/jdk$JAVA_VERSION/bin/javac" 1
-            update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/local/java/jdk$JAVA_VERSION/bin/javaws" 1
-            update-alternatives --set java /usr/local/java/jdk$JAVA_VERSION/bin/java
-            update-alternatives --set javac /usr/local/java/jdk$JAVA_VERSION/bin/javac
-            update-alternatives --set javaws /usr/local/java/jdk$JAVA_VERSION/bin/javaws
+            apt-get update
+            yum -y install openjdk-8-jre || apt-get -y install openjdk-8-jre
 
             # Create local cassandra user
             useradd -m cassandra
