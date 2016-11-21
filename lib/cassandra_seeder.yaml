@@ -62,7 +62,7 @@ resources:
           template: |
             #!/bin/bash
 
-            export CASSANDRA_VERSION=3.0.9
+            export CASSANDRA_VERSION=3.0.10
 
             apt-get update
             yum -y install python openjdk-8-jre || apt-get -y install python-minimal openjdk-8-jre

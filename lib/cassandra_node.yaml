@@ -52,7 +52,7 @@ resources:
             wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
           template: |
             #!/bin/bash
-            export CASSANDRA_VERSION=3.0.9
+            export CASSANDRA_VERSION=3.0.10
 
             apt-get update
             yum -y install openjdk-8-jre || apt-get -y install openjdk-8-jre
