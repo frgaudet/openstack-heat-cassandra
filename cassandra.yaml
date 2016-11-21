@@ -46,9 +46,9 @@ parameters:
     hidden: true
       
 resources:
-  my_key:
+  my_cassandra_key:
     properties:
-      name: my_key
+      name: my_cassandra_key
       save_private_key: true
     type: OS::Nova::KeyPair
 
@@ -63,7 +63,7 @@ resources:
           flavor: { get_param: flavor }
           key_name: { get_param: key_name }
           net_id: { get_param: net_id }
-          public_key: { get_attr: [ my_key, public_key ]  }
+          public_key: { get_attr: [ my_cassandra_key, public_key ]  }
           name:
             str_replace:
               template:
@@ -82,7 +82,7 @@ resources:
       key_name: { get_param: key_name }
       net_id: { get_param: net_id }
       servers: { get_attr: [cassandra_cluster, node_param] }
-      private_key: { get_attr: [ my_key, private_key ] }
+      private_key: { get_attr: [ my_cassandra_key, private_key ] }
       name: { get_param: name }
       public_network: { get_param: public_network }
 
