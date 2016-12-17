@@ -55,7 +55,7 @@ resources:
             export CASSANDRA_VERSION=3.0.10
 
             apt-get update
-            yum -y install openjdk-8-jre || apt-get -y install openjdk-8-jre
+            yum -y install openjdk-8-jre wget || apt-get -y install openjdk-8-jre
 
             # Create local cassandra user
             useradd -m cassandra
