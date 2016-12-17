@@ -65,7 +65,7 @@ resources:
             export CASSANDRA_VERSION=3.0.10
 
             apt-get update
-            yum -y install python openjdk-8-jre || apt-get -y install python-minimal openjdk-8-jre
+            yum -y install python openjdk-8-jre wget || apt-get -y install python-minimal openjdk-8-jre
 
             # Create local cassandra user
             useradd -m cassandra
