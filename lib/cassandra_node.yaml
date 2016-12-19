@@ -52,10 +52,14 @@ resources:
             wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
           template: |
             #!/bin/bash
+
             export CASSANDRA_VERSION=3.0.10
 
-            apt-get update
-            yum -y install openjdk-8-jre wget || apt-get -y install openjdk-8-jre
+            yell() { echo "$0: $*" >&2; }
+            die() { yell "$*"; wc_notify --data-binary '{"status": "FAILURE"}' ; exit 1; }
+            try() { "$@" || die "cannot $*"; }
+
+            yum -y install python java-1.8.0-openjdk wget || (apt-get update && apt-get -y install python-minimal openjdk-8-jre)
 
             # Create local cassandra user
             useradd -m cassandra
@@ -64,7 +68,7 @@ resources:
 
             # Install Cassandra
             cd /opt
-            wget http://mirror.cc.columbia.edu/pub/software/apache/cassandra/$CASSANDRA_VERSION/apache-cassandra-$CASSANDRA_VERSION-bin.tar.gz
+            try wget http://mirror.cc.columbia.edu/pub/software/apache/cassandra/$CASSANDRA_VERSION/apache-cassandra-$CASSANDRA_VERSION-bin.tar.gz
             tar -xf apache-cassandra-$CASSANDRA_VERSION-bin.tar.gz
             ln -s apache-cassandra-$CASSANDRA_VERSION cassandra
             mkdir /etc/default/cassandra
@@ -127,10 +131,14 @@ resources:
             chown -R cassandra. /opt/apache-cassandra-$CASSANDRA_VERSION
 
             # Export Cassandra environment variables
-            cat >> /home/cassandra/.profile << EOF
+            cat >> /etc/profile << EOF
             export CASSANDRA_HOME=/opt/cassandra
             export PATH=\$PATH:\$CASSANDRA_HOME/bin
             EOF
+            # Disable requiretty
+            sed -i  -e "s/Defaults    requiretty/#Defaults    requiretty/g" \
+                    /etc/sudoers
+
             cat > /etc/sudoers.d/cassandra << EOF
             cassandra ALL=(ALL) NOPASSWD: /usr/sbin/service cassandra restart,/bin/mv /tmp/hosts /etc/hosts
             EOF
@@ -150,7 +158,10 @@ resources:
               port_range_max: 22
             - protocol: tcp
               port_range_min: 7000
-              port_range_max: 7000
+              port_range_max: 7001
+            - protocol: tcp
+              port_range_min: 7199
+              port_range_max: 7199
 
   cassandra_port:
     type: OS::Neutron::Port

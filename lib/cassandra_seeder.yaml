@@ -64,8 +64,11 @@ resources:
 
             export CASSANDRA_VERSION=3.0.10
 
-            apt-get update
-            yum -y install python openjdk-8-jre wget || apt-get -y install python-minimal openjdk-8-jre
+            yell() { echo "$0: $*" >&2; }
+            die() { yell "$*"; wc_notify --data-binary '{"status": "FAILURE"}'; exit 1; }
+            try() { "$@" || die "cannot $*"; }
+
+            yum -y install python java-1.8.0-openjdk wget || (apt-get update && apt-get -y install python-minimal openjdk-8-jre)
 
             # Create local cassandra user
             useradd -m cassandra
@@ -81,7 +84,7 @@ resources:
 
             # Install Cassandra
             cd /opt
-            wget http://mirror.cc.columbia.edu/pub/software/apache/cassandra/$CASSANDRA_VERSION/apache-cassandra-$CASSANDRA_VERSION-bin.tar.gz
+            try wget http://mirror.cc.columbia.edu/pub/software/apache/cassandra/$CASSANDRA_VERSION/apache-cassandra-$CASSANDRA_VERSION-bin.tar.gz
             tar -xf apache-cassandra-$CASSANDRA_VERSION-bin.tar.gz
             ln -s apache-cassandra-$CASSANDRA_VERSION cassandra
             mkdir /etc/default/cassandra
@@ -93,12 +96,13 @@ resources:
             chown -R cassandra. /home/cassandra
 
             # Export Cassandra environment variables
-            cat >> /home/cassandra/.profile << EOF
+            cat >> /etc/profile << EOF
             export CASSANDRA_HOME=/opt/cassandra
             export PATH=\$PATH:\$CASSANDRA_HOME/bin
             EOF
 
             # Create Cassandra systemd service
+            if [ -d /lib/systemd/system/ ]; then
             cat > /lib/systemd/system/cassandra.service << EOF
             [Unit]
             Description=Cassandra DB 
@@ -116,7 +120,9 @@ resources:
             WantedBy=multi-user.target
             Alias=cassandra.service
             EOF
+            fi
 
+            if [ -d /etc/init ]; then
             cat > /etc/init/cassandra.conf << EOF
             # cassandra - DB server
             #
@@ -143,6 +149,7 @@ resources:
 
             exec /opt/cassandra/bin/cassandra
             EOF
+            fi
 
             # Enable either systemd or Upstart service
             systemctl enable cassandra.service 2>/dev/null || ln -s /lib/init/upstart-job /etc/init.d/cassandra
@@ -184,7 +191,12 @@ resources:
             EOF
             done
 
-            service cassandra restart
+            try service cassandra restart
+
+            # Disable requiretty
+            sed -i  -e "s/Defaults    requiretty/#Defaults    requiretty/g" \
+                    /etc/sudoers
+
             sleep 5
 
             # node settings
@@ -195,10 +207,10 @@ resources:
                 cp /opt/cassandra/conf/cassandra.yaml /opt/cassandra/conf/cassandra_${ip}.yaml
                 sed -i  -e "s/listen_address.*/listen_address: ${ip}/" \
                         -e "s/rpc_address:.*/rpc_address: ${ip}/" /opt/cassandra/conf/cassandra_${ip}.yaml
-                sudo -H -u cassandra scp /opt/cassandra/conf/cassandra_${ip}.yaml ${ip}:/opt/cassandra/conf/cassandra.yaml
-                sudo -H -u cassandra ssh ${ip} sudo service cassandra restart
-                sudo -H -u cassandra scp /etc/hosts ${ip}:/tmp/hosts
-                sudo -H -u cassandra ssh ${ip} sudo mv /tmp/hosts /etc/hosts
+                try sudo -H -u cassandra scp /opt/cassandra/conf/cassandra_${ip}.yaml ${ip}:/opt/cassandra/conf/cassandra.yaml
+                try sudo -H -u cassandra ssh ${ip} sudo service cassandra restart
+                try sudo -H -u cassandra scp /etc/hosts ${ip}:/tmp/hosts
+                try sudo -H -u cassandra ssh ${ip} sudo mv /tmp/hosts /etc/hosts
                 sleep 60
             done
 
@@ -216,7 +228,10 @@ resources:
               port_range_max: 22
             - protocol: tcp
               port_range_min: 7000
-              port_range_max: 7000
+              port_range_max: 7001
+            - protocol: tcp
+              port_range_min: 7199
+              port_range_max: 7199
 
   cassandra_port:
     type: OS::Neutron::Port
