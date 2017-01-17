@@ -13,12 +13,7 @@ parameters:
   flavor:
     type: string
     default: m1.large
-    constraints:
-    - allowed_values:
-      - m1.large
-      - m1.xlarge
-      - m1.xxlarge
-      description: |
+    description: |
         Choose an instance flavor
   image_id:
     type: string
