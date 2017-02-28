@@ -24,7 +24,7 @@ This heat template allows you to easily deploy a Cassandra cluster on OpenStack.
 cd openstack-heat-cassandra
 heat stack-create -f cassandra.yaml \
 	-e lib/env.yaml \
-	-P "key_name=fgaudet-key;image_id=3170a757-0c5b-48a8-899c-1c5a1a264907;net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
+	-P "key_name=fgaudet-key;image_id=Ubuntu Server 16.04 LTS (xenial);net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
 ```
 
 Default node count is 3 (+ 1 seeder).
@@ -36,7 +36,7 @@ You can change the default parameters to suit your own environment. For example,
 ```
 heat stack-create -f cassandra.yaml \
 	-e lib/env.yaml \
-	-P "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=3170a757-0c5b-48a8-899c-1c5a1a264907;net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
+	-P "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=Ubuntu Server 16.04 LTS (xenial);net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
 ```
 
 Note the stack id :
