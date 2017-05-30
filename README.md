@@ -22,9 +22,10 @@ This heat template allows you to easily deploy a Cassandra cluster on OpenStack.
 
 ```
 cd openstack-heat-cassandra
-heat stack-create -f cassandra.yaml \
-	-e lib/env.yaml \
-	-P "key_name=fgaudet-key;image_id=Ubuntu Server 16.04 LTS (xenial);net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
+openstack stack create -e lib/env.yaml \
+	--paramater "key_name=fgaudet-key;image_id=Ubuntu Server 16.04 LTS (xenial);net_id=fgaudet-net2;name=fgaudet-cassandra" \
+	-t cassandra.yaml \
+	Cassandra-stack
 ```
 
 Default node count is 3 (+ 1 seeder).
@@ -34,35 +35,42 @@ Default node count is 3 (+ 1 seeder).
 You can change the default parameters to suit your own environment. For example, create a 5 nodes cluster, with a m1.xlarge flavor :
 
 ```
-heat stack-create -f cassandra.yaml \
-	-e lib/env.yaml \
-	-P "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=Ubuntu Server 16.04 LTS (xenial);net_id=dev-net;name=fgaudet-cassandra" Cassandra-stack
+openstack stack create -e lib/env.yaml \
+	--paramater "count=5;flavor=m1.xlarge;key_name=fgaudet-key;image_id=Ubuntu Server 16.04 LTS (xenial);net_id=fgaudet-net2;name=fgaudet-cassandra" \
+	-t cassandra.yaml \
+	Cassandra-stack
 ```
 
 Note the stack id :
 ```
-+--------------------------------------+------------------+--------------------+---------------------+--------------+
-| id                                   | stack_name       | stack_status       | creation_time       | updated_time |
-+--------------------------------------+------------------+--------------------+---------------------+--------------+
-| b7a7092c-876c-4c19-a8d3-47cb857a0ca6 | Cassandra-stack  | CREATE_IN_PROGRESS | 2016-08-31T09:28:39 | None         |
-+--------------------------------------+------------------+--------------------+---------------------+--------------+
++---------------------+--------------------------------------------------------+
+| Field               | Value                                                  |
++---------------------+--------------------------------------------------------+
+| id                  | 3372c082-a049-405b-99b5-ac439278ea5f                   |
+| stack_name          | Cassandra-stack                                        |
+| description         | Template that installs a cluster of Cassandra servers. |
+| creation_time       | 2017-05-30T12:13:47                                    |
+| updated_time        | None                                                   |
+| stack_status        | CREATE_IN_PROGRESS                                     |
+| stack_status_reason | Stack CREATE started                                   |
++---------------------+--------------------------------------------------------+
 ```
 
 # Check the master
 
 Get your cluster's public IP address using the stack id (see above):
 
-`heat output-show b7a7092c-876c-4c19-a8d3-47cb857a0ca6 public_ip`
+`openstack stack output show 3372c082-a049-405b-99b5-ac439278ea5f public_ip`
 
 This command should return you something like this, with of course a real IP :
 ```
-+--------------+--------------------------------------------+
-| Property     | Value                                      |
-+--------------+--------------------------------------------+
-| description  | The public IP address of this mpi cluster. |
-| output_key   | public_ip                                  |
-| output_value | "XXX.XXX.XXX.XXX"                          |
-+--------------+--------------------------------------------+
++--------------+--------------------------------------------------+
+| Property     | Value                                            |
++--------------+--------------------------------------------------+
+| description  | The public IP address of this Cassandra cluster. |
+| output_key   | public_ip                                        |
+| output_value | "XXX.XXX.XXX.XXX"                                |
++--------------+--------------------------------------------------+
 ```
 
 # Check it !
