@@ -62,7 +62,7 @@ resources:
           template: |
             #!/bin/bash
 
-            export CASSANDRA_VERSION=3.0.10
+            export CASSANDRA_VERSION=3.10
 
             yell() { echo "$0: $*" >&2; }
             die() { yell "$*"; wc_notify --data-binary '{"status": "FAILURE"}'; exit 1; }
