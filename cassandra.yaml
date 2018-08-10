@@ -29,16 +29,6 @@ parameters:
     type: string
     description: Public network id
     default: ext-net
-  private_key:
-    type: string
-    description: Name of private key to be used for the local Cassandra user
-    default: []
-    hidden: true
-  public_key:
-    type: string
-    description: Name of plublic key to be used for the local Cassandra user
-    default: []
-    hidden: true
       
 resources:
   my_cassandra_key:
